@@ -71,10 +71,10 @@ def send_to_rubika(caption):
         print("❌ Missing rubika credentials!")
         return False
 
-    url = f"https://botapi.rubika.ir/v3/{rubika_BOT_TOKEN}/sendMessage"
-    payload = {
-        "chat_id": rubika_CHAT_ID,
-        "text": caption
+  url = f"https://botapi.rubika.ir/v3/{rubika_BOT_TOKEN}/sendMessage"
+payload = { 
+    "chat_id": rubika_CHAT_ID, 
+    "text": caption
     }
 
     try:
