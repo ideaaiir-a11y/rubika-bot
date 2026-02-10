@@ -6,8 +6,8 @@ import time
 from datetime import datetime
 
 # ============= CONFIGURATION =============
-rubika_BOT_TOKEN = os.environ.get("BOT_TOKEN")
-rubika_CHAT_ID = os.environ.get("CHAT_ID")
+BOT_TOKEN = os.environ.get("BOT_TOKEN")   # توکن ربات
+CHAT_ID = os.environ.get("CHAT_ID")       # شناسه کانال یا گروه مقصد
 
 # ============= TRANSLATION MAP =============
 TRANSLATE_MAP = {
@@ -67,25 +67,21 @@ def format_rubika_post(title, source, likes, image_url):
     return caption
 
 def send_to_rubika(caption):
-    if not rubika_BOT_TOKEN or not rubika_CHAT_ID:
+    if not BOT_TOKEN or not CHAT_ID:
         print("❌ Missing rubika credentials!")
         return False
 
-url = f'https://botapi.rubika.ir/v3/{token}/sendMessage'
-response = requests.post(url, json=data)
-
-print(response.text)
-  
-data = {
-    "chat_id": rubika_CHAT_ID,
-    "text": "caption",
-}
-
+    url = f"https://botapi.rubika.ir/v3/{BOT_TOKEN}/sendMessage"
+    payload = {
+        "chat_id": CHAT_ID,
+        "text": caption
+    }
 
     try:
-        response = requests.post(url, data=payload, timeout=15)
+        response = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
         if response.status_code == 200:
-            print("✅ Post sent successfully!")
+            data = response.json()
+            print(f"✅ Post sent successfully! message_id={data.get('message_id')}")
             return True
         else:
             print(f"❌ rubika error: {response.text}")
