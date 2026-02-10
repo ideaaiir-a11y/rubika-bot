@@ -1,0 +1,2 @@
+# Telegram Content Automation Dependencies
+requests>=2.31.0
