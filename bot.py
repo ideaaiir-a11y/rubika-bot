@@ -223,7 +223,7 @@ def send_to_rubika(image_url, caption):
         print("Missing rubika credentials!")
         return False
     
-    url = f"https://api.rubika.org/bot{rubika_BOT_TOKEN}/sendPhoto"
+    url = f"https://botapi.rubika.ir/v3/{rubika_BOT_TOKEN}/sendPhoto"
     
     payload = {
         "photo": image_url,
