@@ -2,8 +2,8 @@ name: rubika Content Automation
 
 on:
   schedule:
-    # Run every 30 minutes - 24/7 automation
-    - cron: '*/3 * * * *'
+    # Run every 2 minutes - 24/7 automation
+    - cron: '*/2 * * * *'
   workflow_dispatch:
   push:
     paths:
