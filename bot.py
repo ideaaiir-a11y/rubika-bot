@@ -11,7 +11,7 @@ import os
 import random
 import time
 from datetime import datetime
-from rubika import Bot
+
 
 # تنظیمات لاگ
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
