@@ -1,128 +1,103 @@
+# -*- coding: utf-8 -*-
+"""
+سیستم اتوماسیون محتوای اخلاقی
+الهام‌گرفته از عناصر ایرانی: آتش، آب، باد، خاک
+"""
+
 import csv
+import json
+import logging
 import os
 import random
-import requests
 import time
 from datetime import datetime
+from telegram import Bot
 
-# ============= CONFIGURATION =============
-BOT_TOKEN = os.environ.get("BOT_TOKEN")   # توکن ربات
-CHAT_ID = os.environ.get("CHAT_ID")       # شناسه کانال یا گروه مقصد
+# تنظیمات لاگ
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-# ============= TRANSLATION MAP =============
-TRANSLATE_MAP = {
-    "small towns": "شهرک‌های کوچک",
-    "picturesque": "زیبا و رویایی",
-    "America": "آمریکا",
-    "world": "دنیا",
-    "countries": "کشورها",
-    "cuisine": "غذاها",
-    "food": "غذا",
-    "beaches": "سواحل",
-    "travel": "سفر",
-    "hidden": "پنهان",
-    "best": "بهترین",
-    "ranked": "رتبه‌بندی شده",
-    "every day": "هر روز",
-    "eggs": "تخم‌مرغ",
-    "eat": "بخورید",
-    "friendly": "مهربان",
-    "street food": "غذای خیابانی",
-    "Asia": "آسیا",
-    "Europe": "اروپا",
-    "visit": "بازدید",
-    "travelers": "مسافران",
-    "20 of the most": "۲۰ مورد از زیباترین",
-    "What happens to your body": "اگر روزانه این غذا را بخورید چه اتفاقی می‌افتد؟",
-    "The friendliest": "مهربان‌ترین",
-    "Best street food": "بهترین غذاهای خیابانی",
-    "Hidden beaches": "سواحل مخفی",
-}
+# اسرار از GitHub Secrets
+BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
+CHANNEL_ID = os.environ.get("CHANNEL_ID")
 
-# ============= ADVERTISEMENT LINKS =============
-AD_LINKS = [
-    "https://go.rubika.ir/vodi65",
-    "https://golinks.io/travel-deals",
-    "https://rubika.ir/codenevesht"
-]
+# 🟡 خاک (Earth): لایه‌ی داده و امنیت
+class Khak:
+    """خاک: نگهداری وضعیت و امنیت"""
+    def __init__(self, state_file="state.json"):
+        self.state_file = state_file
+        self.state = self._load_state()
 
-def translate_to_persian(text):
-    result = text
-    for eng, per in TRANSLATE_MAP.items():
-        result = result.replace(eng, per)
-    if result == text:
-        result = f"🌍 {text} که باید ببینید!"
-    return result
+    def _load_state(self):
+        if os.path.exists(self.state_file):
+            with open(self.state_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        return {"last_post": None}
 
-def format_rubika_post(title, source, likes, image_url):
-    persian_title = translate_to_persian(title)
-    caption = f"""✨ {persian_title}
+    def save_state(self):
+        with open(self.state_file, "w", encoding="utf-8") as f:
+            json.dump(self.state, f, ensure_ascii=False, indent=2)
 
-📌 منبع: {source}
-❤️ {likes} لایک
+# 🔵 آب (Water): جریان محتوا و CSV
+class Ab:
+    """آب: خواندن محتوا از CSV"""
+    def __init__(self, csv_file="content.csv"):
+        self.csv_file = csv_file
 
-🔗 تصویر: {image_url}
-
-{random.choice(AD_LINKS)}"""
-    return caption
-
-def send_to_rubika(caption):
-    if not BOT_TOKEN or not CHAT_ID:
-        print("❌ Missing rubika credentials!")
-        return False
-
-    url = f"https://botapi.rubika.ir/v3/{BOT_TOKEN}/sendMessage"
-    payload = {
-        "chat_id": CHAT_ID,
-        "text": caption
-    }
-
-    try:
-        response = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
-        if response.status_code == 200:
-            data = response.json()
-            print(f"✅ Post sent successfully! message_id={data.get('message_id')}")
-            return True
-        else:
-            print(f"❌ rubika error: {response.text}")
-            return False
-    except Exception as e:
-        print(f"❌ Failed to send to rubika: {e}")
-        return False
-
-def process_csv():
-    posts_created = 0
-    try:
-        with open('content.csv', 'r', encoding='utf-8') as f:
+    def read_content(self):
+        with open(self.csv_file, "r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
-            for row in reader:
-                title = row.get('title', '').strip()
-                source = row.get('source', '').strip()
-                likes = int(row.get('likes', '0'))
-                if not title:
-                    continue
+            return list(reader)
 
-                print(f"\n📝 Processing: {title}")
-                image_url = "https://images.pexels.com/photos/235734/pexels-photo-235774.jpeg"
-                caption = format_rubika_post(title, source, likes, image_url)
+# 🟢 باد (Wind): تحلیل و تعامل
+class Bad:
+    """باد: ردیابی تعامل و تحلیل ساده"""
+    def __init__(self):
+        self.analytics_file = "analytics.json"
+        if not os.path.exists(self.analytics_file):
+            with open(self.analytics_file, "w", encoding="utf-8") as f:
+                json.dump({"posts_sent": 0}, f)
 
-                if send_to_rubika(caption):
-                    posts_created += 1
-                time.sleep(2)
-    except FileNotFoundError:
-        print("❌ content.csv not found!")
-    except Exception as e:
-        print(f"❌ Error processing CSV: {e}")
-    return posts_created
+    def update(self):
+        with open(self.analytics_file, "r+", encoding="utf-8") as f:
+            data = json.load(f)
+            data["posts_sent"] += 1
+            f.seek(0)
+            json.dump(data, f, ensure_ascii=False, indent=2)
+            f.truncate()
 
-def main():
-    print("🚀 Starting rubika Content Automation...")
-    print(f"⏰ Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("=" * 50)
-    posts = process_csv()
-    print("=" * 50)
-    print(f"✅ Automation complete! {posts} posts sent.")
-    print("🔄 Waiting for next scheduled run...")
+# 🔴 آتش (Fire): موتور انتشار
+class Atash:
+    """آتش: انرژی و موتور انتشار"""
+    def __init__(self, bot_token, channel_id):
+        self.bot = Bot(token=bot_token)
+        self.channel_id = channel_id
+
+    def publish(self, title, body, media_url, tags):
+        caption = f"🔥 {title}\n\n{body}\n\n📌 برچسب‌ها: {tags}"
+        if media_url:
+            self.bot.send_photo(chat_id=self.channel_id, photo=media_url, caption=caption)
+        else:
+            self.bot.send_message(chat_id=self.channel_id, text=caption)
+        logging.info(f"✅ پست ارسال شد: {title}")
+
+# 🌍 چرخه اصلی
+def gardish():
+    khak = Khak()
+    ab = Ab()
+    bad = Bad()
+    atash = Atash(BOT_TOKEN, CHANNEL_ID)
+
+    content_list = ab.read_content()
+    for item in content_list:
+        timestamp = item["timestamp"]
+        if khak.state["last_post"] == timestamp:
+            continue
+        atash.publish(item["title_fa"], item["body_fa"], item["media_url"], item["tags"])
+        khak.state["last_post"] = timestamp
+        khak.save_state()
+        bad.update()
+        time.sleep(2)  # نفس (interval)
 
 if __name__ == "__main__":
-    main()
+    logging.info("🚀 شروع اتوماسیون محتوای اخلاقی...")
+    gardish()
