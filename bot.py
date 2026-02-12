@@ -11,13 +11,13 @@ import os
 import random
 import time
 from datetime import datetime
-from telegram import Bot
+from rubika import Bot
 
 # تنظیمات لاگ
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 # اسرار از GitHub Secrets
-BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
+BOT_TOKEN = os.environ.get("rubika_BOT_TOKEN")
 CHANNEL_ID = os.environ.get("CHANNEL_ID")
 
 # 🟡 خاک (Earth): لایه‌ی داده و امنیت
